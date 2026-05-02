@@ -1,0 +1,23 @@
+<article class="rcf__card">
+  <a href="{{ product.url }}" class="rcf__media" aria-label="{{ product.title | escape }}">
+    {% assign first = product.featured_image %}
+    {% assign second = product.images[1] %}
+    {% if first %}
+      <img src="{{ first | image_url: width: 900 }}" alt="{{ first.alt | escape }}" class="rcf__img rcf__img--primary" loading="lazy">
+    {% endif %}
+    {% if second %}
+      <img src="{{ second | image_url: width: 900 }}" alt="{{ second.alt | escape }}" class="rcf__img rcf__img--secondary" loading="lazy">
+    {% endif %}
+  </a>
+  <div class="rcf__info">
+    <a href="{{ product.url }}" class="rcf__name">{{ product.title }}</a>
+    <div class="rcf__price">
+      {% if product.compare_at_price > product.price %}
+        <span class="rcf__price-current">{{ product.price | money }}</span>
+        <span class="rcf__price-compare">{{ product.compare_at_price | money }}</span>
+      {% else %}
+        <span class="rcf__price-current">{{ product.price | money }}</span>
+      {% endif %}
+    </div>
+  </div>
+</article>
