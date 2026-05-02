@@ -1,0 +1,138 @@
+# =========================
+# RHINOS Shopify Theme
+# .gitignore
+# =========================
+
+# -------------------------
+# OS FILES
+# -------------------------
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# -------------------------
+# EDITOR FILES
+# -------------------------
+
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# -------------------------
+# NODE
+# -------------------------
+
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# -------------------------
+# ENV FILES
+# -------------------------
+
+.env
+.env.local
+.env.development
+.env.production
+
+# -------------------------
+# SHOPIFY
+# -------------------------
+
+.shopify/
+config.yml
+
+# Shopify CLI temporary files
+.tmp/
+tmp/
+
+# -------------------------
+# LOGS
+# -------------------------
+
+logs/
+*.log
+
+# -------------------------
+# CACHE
+# -------------------------
+
+.cache/
+.parcel-cache/
+
+# -------------------------
+# BUILD FILES
+# -------------------------
+
+dist/
+build/
+
+# -------------------------
+# MAC / WINDOWS RANDOM CHAOS
+# -------------------------
+
+Icon?
+ehthumbs.db
+
+# -------------------------
+# ZIP EXPORTS
+# -------------------------
+
+*.zip
+
+# -------------------------
+# BACKUPS
+# -------------------------
+
+backup/
+backups/
+*.bak
+*.backup
+*.old
+
+# -------------------------
+# TEST FILES
+# -------------------------
+
+coverage/
+
+# -------------------------
+# LOCAL DATABASES
+# -------------------------
+
+*.sqlite
+*.sqlite3
+
+# -------------------------
+# TEMP FILES
+# -------------------------
+
+*.tmp
+*.temp
+
+# -------------------------
+# OPTIONAL:
+# Uncomment if using Theme Kit
+# -------------------------
+
+# config/settings_data.json
+
+# WARNING:
+# Only ignore settings_data.json
+# if you do NOT want live customizer
+# changes versioned in Git.
+
+# For RHINOS:
+# Recommended to KEEP tracked
+# unless collaborating in large teams.
+
+# -------------------------
+# END
+# -------------------------
