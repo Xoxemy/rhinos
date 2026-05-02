@@ -1,0 +1,128 @@
+{% comment %}
+  Section: Xoxemy - random products
+  - Permite seleccionar varias colecciones
+  - Muestra 4 productos aleatorios
+  - Cambia automáticamente cada 30 segundos
+{% endcomment %}
+
+<section class="random-collection-fabric" id="rcf-{{ section.id }}">
+  <div class="rcf__header">
+    {% if section.settings.heading != blank %}
+      <h2 class="rcf__title">{{ section.settings.heading }}</h2>
+    {% endif %}
+    {% if section.settings.subheading != blank %}
+      <p class="rcf__subtitle">{{ section.settings.subheading }}</p>
+    {% endif %}
+  </div>
+
+  <div class="rcf__grid">
+    {% if section.settings.collection_1 != blank %}
+      {% for product in section.settings.collection_1.products %}
+        {% render 'rcf-product-card', product: product %}
+      {% endfor %}
+    {% endif %}
+
+    {% if section.settings.collection_2 != blank %}
+      {% for product in section.settings.collection_2.products %}
+        {% render 'rcf-product-card', product: product %}
+      {% endfor %}
+    {% endif %}
+
+    {% if section.settings.collection_3 != blank %}
+      {% for product in section.settings.collection_3.products %}
+        {% render 'rcf-product-card', product: product %}
+      {% endfor %}
+    {% endif %}
+
+    {% if section.settings.collection_4 != blank %}
+      {% for product in section.settings.collection_4.products %}
+        {% render 'rcf-product-card', product: product %}
+      {% endfor %}
+    {% endif %}
+  </div>
+</section>
+
+<script>
+(function(){
+  var root = document.getElementById('rcf-{{ section.id }}');
+  if (!root) return;
+  var cards = root.querySelectorAll('.rcf__card');
+  if (!cards.length) return;
+
+  var count = {{ section.settings.products_count | default: 4 }};
+
+  function showRandomProducts() {
+    cards.forEach(c => c.style.display = "none");
+
+    if (cards.length <= count) {
+      cards.forEach(c => c.style.display = "block");
+      return;
+    }
+
+    var selected = [];
+    while (selected.length < count) {
+      var idx = Math.floor(Math.random() * cards.length);
+      if (!selected.includes(idx)) selected.push(idx);
+    }
+    selected.forEach(i => { cards[i].style.display = "block"; });
+  }
+
+  // Mostrar productos al cargar
+  showRandomProducts();
+
+  // Cambiar cada 30 segundos
+  setInterval(showRandomProducts, 30000);
+})();
+</script>
+
+<style>
+  .random-collection-fabric { padding: 24px 0; }
+  .rcf__header { text-align: left; margin-bottom: 16px; }
+  .rcf__title { font-size: clamp(20px, 2vw, 28px); font-weight: 700; margin: 0 0 4px; }
+  .rcf__subtitle { color: rgba(0,0,0,.6); margin: 0; }
+  .rcf__grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+  @media (min-width: 900px) {
+    .rcf__grid { grid-template-columns: repeat(4, 1fr); }
+  }
+  .rcf__card { display: flex; flex-direction: column; gap: 8px; }
+  .rcf__media {
+    position: relative; display: block; aspect-ratio: 1 / 1; overflow: hidden; background: #f6f6f6; border-radius: 6px;
+  }
+  .rcf__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; transition: opacity .25s ease; }
+  .rcf__img--secondary { opacity: 0; }
+  .rcf__media:hover .rcf__img--secondary { opacity: 1; }
+  .rcf__media:hover .rcf__img--primary { opacity: 0; }
+  .rcf__info { display: grid; gap: 4px; }
+  .rcf__name { font-size: 14px; text-decoration: none; color: inherit; }
+  .rcf__name:hover { text-decoration: underline; }
+  .rcf__price { display: flex; align-items: center; gap: 8px; }
+  .rcf__price-current { font-weight: 700; }
+  .rcf__price-compare { text-decoration: line-through; color: rgba(0,0,0,.5); }
+</style>
+
+{% schema %}
+{
+  "name": "Xoxemy - random products",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Título", "default": "Productos destacados" },
+    { "type": "text", "id": "subheading", "label": "Subtítulo", "default": "Explora nuestra selección" },
+    { "type": "collection", "id": "collection_1", "label": "Colección 1" },
+    { "type": "collection", "id": "collection_2", "label": "Colección 2" },
+    { "type": "collection", "id": "collection_3", "label": "Colección 3" },
+    { "type": "collection", "id": "collection_4", "label": "Colección 4" },
+    {
+      "type": "range", "id": "products_count", "label": "Número de productos aleatorios",
+      "min": 2, "max": 12, "step": 1, "default": 4
+    }
+  ],
+  "presets": [
+    { "name": "Xoxemy - random products", "category": "Colecciones" }
+  ]
+}
+{% endschema %}

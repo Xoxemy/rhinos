@@ -1,0 +1,182 @@
+{% comment %}
+  Section: Colección con filtros arriba (layout tipo "Disponibilidad | Más" + grid 4 columnas)
+  - Selecciona una colección en ajustes
+  - Topbar con dos dropdowns: "Disponibilidad" (primer filtro booleano que exista) y "Más" (resto de filtros)
+  - Contador de artículos a la derecha
+  - Grid responsive: 1 / 2 / 4 columnas
+{% endcomment %}
+
+{% liquid
+  assign col = section.settings.collection
+  if col == blank
+    assign collection_obj = null
+  else
+    assign collection_obj = collections[col]
+  endif
+%}
+
+<section id="section-{{ section.id }}" class="cwfa container">
+  <style>
+    .cwfa.container{width:100%;max-width:var(--page-width,1200px);margin:0 auto;padding:0 1rem}
+    .cwfa__top{display:grid;grid-template-columns:1fr auto;gap:.75rem;align-items:center;margin:.75rem 0}
+    .cwfa__filtersbar{display:flex;gap:1rem;align-items:center}
+    .cwfa__count{opacity:.8;font-size:.95rem}
+    .cwfa__dd{position:relative}
+    .cwfa__dd summary{list-style:none;cursor:pointer;border:1px solid rgba(0,0,0,.12);padding:.45rem .7rem;border-radius:.5rem;font-size:.95rem}
+    .cwfa__dd[open] summary{box-shadow:0 2px 10px rgba(0,0,0,.06)}
+    .cwfa__panel{position:absolute;left:0;top:calc(100% + .4rem);z-index:30;min-width:260px;background:#fff;border:1px solid rgba(0,0,0,.12);border-radius:.5rem;padding:.75rem;box-shadow:0 6px 24px rgba(0,0,0,.08)}
+    .cwfa__panel .group{display:grid;gap:.4rem;max-height:280px;overflow:auto}
+    .cwfa__panel .actions{display:flex;gap:.5rem;justify-content:flex-end;margin-top:.6rem}
+    .cwfa__btn{appearance:none;border:1px solid rgba(0,0,0,.15);background:#fff;border-radius:.45rem;padding:.45rem .7rem;cursor:pointer}
+    .cwfa__btn--primary{background:#111;color:#fff;border-color:#111}
+
+    .cwfa__grid{display:grid;gap:1rem}
+    @media(min-width:640px){.cwfa__grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(min-width:1024px){.cwfa__grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+    .cwfa__card{border:1px solid rgba(0,0,0,.08);border-radius:.75rem;overflow:hidden;background:#fff}
+    .cwfa__media{aspect-ratio:1/1;background:#f6f6f6}
+    .cwfa__media img{width:100%;height:100%;object-fit:cover}
+    .cwfa__body{padding:.75rem}
+    .cwfa__title{font-size:.95rem;font-weight:600;margin:0 0 .25rem}
+    .cwfa__price{font-size:.95rem}
+  </style>
+
+  {% if collection_obj == null %}
+    <p><em>Configura una colección en los ajustes de la sección.</em></p>
+  {% else %}
+
+  {%- assign total_count = collection_obj.products_count -%}
+  <div class="cwfa__top">
+    <div class="cwfa__filtersbar">
+      {%- comment -%} Dropdown 1: Disponibilidad (primer filtro booleano) {%- endcomment -%}
+      {%- assign has_boolean = false -%}
+      {%- for filter in collection_obj.filters -%}
+        {%- if has_boolean == false and filter.type == 'boolean' -%}
+          {%- assign has_boolean = true -%}
+          <details class="cwfa__dd">
+            <summary>Disponibilidad</summary>
+            <div class="cwfa__panel">
+              <form method="get" action="{{ collection_obj.url }}">
+                {%- comment -%} Preservar valores activos de todos los filtros salvo el que estamos modificando {%- endcomment -%}
+                {%- for f in collection_obj.filters -%}
+                  {%- if f != filter -%}
+                    {%- for v in f.active_values -%}
+                      <input type="hidden" name="{{ v.param_name }}" value="{{ v.value }}">
+                    {%- endfor -%}
+                    {%- if f.type == 'price_range' -%}
+                      {%- if f.min_value.value -%}
+                        <input type="hidden" name="{{ f.min_value.param_name }}" value="{{ f.min_value.value }}">
+                      {%- endif -%}
+                      {%- if f.max_value.value -%}
+                        <input type="hidden" name="{{ f.max_value.param_name }}" value="{{ f.max_value.value }}">
+                      {%- endif -%}
+                    {%- endif -%}
+                  {%- endif -%}
+                {%- endfor -%}
+
+                <div class="group">
+                  <label>
+                    <input type="checkbox" name="{{ filter.values.first.param_name }}" value="{{ filter.values.first.value }}" {% if filter.values.first.active %}checked{% endif %}>
+                    {{ filter.values.first.label }}
+                  </label>
+                </div>
+                <div class="actions">
+                  <button class="cwfa__btn cwfa__btn--primary" type="submit">Aplicar</button>
+                  <a class="cwfa__btn" href="{{ filter.url_to_remove }}">Borrar</a>
+                </div>
+              </form>
+            </div>
+          </details>
+        {%- endif -%}
+      {%- endfor -%}
+
+      {%- comment -%} Dropdown 2: Más (todos los demás filtros) {%- endcomment -%}
+      <details class="cwfa__dd">
+        <summary>Más</summary>
+        <div class="cwfa__panel">
+          <form method="get" action="{{ collection_obj.url }}">
+            <div class="group">
+            {%- for filter in collection_obj.filters -%}
+              {%- unless filter.type == 'boolean' and forloop.first -%}
+                <fieldset style="border:0;padding:0;margin:0 0 .5rem">
+                  <legend style="font-weight:600;margin:0 0 .25rem">{{ filter.label }}</legend>
+
+                  {%- if filter.type == 'list' -%}
+                    {%- for value in filter.values -%}
+                      <label>
+                        <input type="checkbox" name="{{ value.param_name }}" value="{{ value.value }}" {% if value.active %}checked{% endif %} {% if value.count == 0 and value.active == false %}disabled{% endif %}>
+                        {{ value.label }} ({{ value.count }})
+                      </label>
+                    {%- endfor -%}
+
+                  {%- elsif filter.type == 'price_range' -%}
+                    <div style="display:flex;gap:.5rem">
+                      <input type="number" name="{{ filter.min_value.param_name }}" value="{% if filter.min_value.value %}{{ filter.min_value.value | divided_by: 100.0 | round: 2 }}{% endif %}" placeholder="Mín" min="0" step="1" style="flex:1">
+                      <input type="number" name="{{ filter.max_value.param_name }}" value="{% if filter.max_value.value %}{{ filter.max_value.value | divided_by: 100.0 | round: 2 }}{% endif %}" placeholder="Máx" min="0" step="1" style="flex:1">
+                    </div>
+                  {%- endif -%}
+                </fieldset>
+              {%- endunless -%}
+            {%- endfor -%}
+            </div>
+            <div class="actions">
+              <button class="cwfa__btn cwfa__btn--primary" type="submit">Aplicar</button>
+              <a class="cwfa__btn" href="{{ collection_obj.url }}">Borrar filtros</a>
+            </div>
+          </form>
+        </div>
+      </details>
+    </div>
+    <div class="cwfa__count">{{ total_count }} {{ total_count | pluralize: 'artículo','artículos' }}</div>
+  </div>
+
+  {% paginate collection_obj.products by section.settings.products_per_page %}
+    <div class="cwfa__grid">
+      {%- if collection_obj.products_count == 0 -%}
+        <p>No hay productos en esta colección.</p>
+      {%- else -%}
+        {%- for product in collection_obj.products -%}
+          <article class="cwfa__card">
+            <a href="{{ product.url }}" style="text-decoration:none;color:inherit">
+              <div class="cwfa__media">
+                {%- if product.featured_image -%}
+                  <img loading="lazy" src="{{ product.featured_image | img_url: '700x' }}" alt="{{ product.featured_image.alt | escape }}">
+                {%- endif -%}
+              </div>
+              <div class="cwfa__body">
+                <h3 class="cwfa__title">{{ product.title }}</h3>
+                <div class="cwfa__price">{{ product.price | money }}</div>
+              </div>
+            </a>
+          </article>
+        {%- endfor -%}
+      {%- endif -%}
+    </div>
+
+    {%- if paginate.pages > 1 -%}
+      <nav class="cwfa__pagination" style="display:flex;gap:.5rem;justify-content:center;margin:1rem 0">
+        {%- if paginate.previous -%}
+          <a class="cwfa__btn" href="{{ paginate.previous.url }}">Anterior</a>
+        {%- endif -%}
+        <span style="padding:.45rem .7rem;border:1px solid rgba(0,0,0,.12);border-radius:.5rem">{{ paginate.current_page }} / {{ paginate.pages }}</span>
+        {%- if paginate.next -%}
+          <a class="cwfa__btn" href="{{ paginate.next.url }}">Siguiente</a>
+        {%- endif -%}
+      </nav>
+    {%- endif -%}
+  {% endpaginate %}
+
+  {% endif %}
+</section>
+
+{% schema %}
+{
+  "name": "Xoxemy - Coleccion",
+  "settings": [
+    { "type": "collection", "id": "collection", "label": "Colección" },
+    { "type": "range", "id": "products_per_page", "min": 4, "max": 48, "step": 4, "default": 16, "label": "Productos por página" }
+  ],
+  "presets": [ { "name": "Xoxemy - Coleccion" } ]
+}
+{% endschema %}

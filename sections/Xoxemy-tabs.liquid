@@ -1,0 +1,250 @@
+{% comment %}
+  Featured Collections Tabs — Fabric-ready (robusto)
+  + Opciones de ocultar por dispositivo
+{% endcomment %}
+
+<section id="rfx-tabs-{{ section.id }}" class="rfx-tabs {{ section.settings.section_spacing }}{% if section.settings.hide_on_mobile %} rfx-hide--mobile{% endif %}{% if section.settings.hide_on_tablet %} rfx-hide--tablet{% endif %}{% if section.settings.hide_on_desktop %} rfx-hide--desktop{% endif %}">
+  <div class="rfx-tabs__header">
+    {% if section.settings.heading != blank %}
+      <h2 class="rfx-tabs__title">{{ section.settings.heading }}</h2>
+    {% endif %}
+
+    <div class="rfx-tabs__list" role="tablist" aria-label="{{ section.settings.heading | default: 'Colecciones' }}">
+      {% for block in section.blocks %}
+        {% assign is_active = forloop.first %}
+        <button
+          type="button"
+          class="rfx-tabs__tab {% if is_active %}is-active{% endif %}"
+          role="tab"
+          aria-selected="{{ is_active }}"
+          aria-controls="panel-{{ section.id }}-{{ block.id }}"
+          id="tab-{{ section.id }}-{{ block.id }}"
+          data-tab-target="panel-{{ section.id }}-{{ block.id }}">
+          {{ block.settings.tab_label | default: block.settings.collection.title | default: 'Colección' }}
+        </button>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% for block in section.blocks %}
+    {% assign is_active = forloop.first %}
+    {% assign coll = block.settings.collection %}
+    <div
+      id="panel-{{ section.id }}-{{ block.id }}"
+      class="rfx-tabs__panel {% if is_active %}is-active{% endif %}"
+      role="tabpanel"
+      aria-labelledby="tab-{{ section.id }}-{{ block.id }}"
+      tabindex="0">
+
+      {% if coll != blank %}
+        {% paginate coll.products by section.settings.products_per_tab %}
+          <div class="rfx-grid rfx-grid--{{ section.settings.columns_desktop }}">
+            {% for product in coll.products %}
+              {% assign first_available_variant = nil %}
+              {% for v in product.variants %}
+                {% if v.available and first_available_variant == nil %}
+                  {% assign first_available_variant = v %}
+                {% endif %}
+              {% endfor %}
+
+              <article class="rfx-card">
+                <a class="rfx-card__media" href="{{ product.url }}">
+                  {% if product.featured_image %}
+                    <img
+                      src="{{ product.featured_image | img_url: '600x' }}"
+                      srcset="{{ product.featured_image | img_url: '400x' }} 400w, {{ product.featured_image | img_url: '600x' }} 600w, {{ product.featured_image | img_url: '900x' }} 900w"
+                      sizes="(max-width: 740px) 50vw, 25vw"
+                      alt="{{ product.featured_image.alt | default: product.title | escape }}"
+                      loading="lazy">
+                  {% else %}
+                    <div class="rfx-card__placeholder" aria-hidden="true"></div>
+                  {% endif %}
+
+                  {% if product.compare_at_price_max > product.price %}
+                    {% assign ahorro = product.compare_at_price_max | minus: product.price %}
+                    {% assign descuento = ahorro | times: 100 | divided_by: product.compare_at_price_max | round %}
+                    <span class="rfx-badge">-{{ descuento }}%</span>
+                  {% endif %}
+                </a>
+
+                <div class="rfx-card__body">
+                  <a class="rfx-card__title" href="{{ product.url }}">{{ product.title }}</a>
+
+                  <div class="rfx-card__price">
+                    {% if product.compare_at_price_max > product.price %}
+                      <span class="rfx-price rfx-price--sale">
+                        <s>{{ product.compare_at_price_max | money }}</s>
+                        {{ product.price | money }}
+                      </span>
+                    {% else %}
+                      <span class="rfx-price">{{ product.price | money }}</span>
+                    {% endif %}
+                  </div>
+
+                  {% if section.settings.enable_quick_add %}
+                    {% if first_available_variant %}
+                      <form method="post" action="/cart/add" class="rfx-card__form" data-product-id="{{ product.id }}">
+                        <input type="hidden" name="id" value="{{ first_available_variant.id }}">
+                        <input type="hidden" name="quantity" value="1">
+                        <button type="submit" class="rfx-button" aria-label="Añadir {{ product.title }} al carrito">
+                          {{ section.settings.quick_add_label | default: 'Añadir' }}
+                        </button>
+                      </form>
+                    {% else %}
+                      <button class="rfx-button rfx-button--disabled" disabled>Agotado</button>
+                    {% endif %}
+                  {% endif %}
+                </div>
+              </article>
+            {% endfor %}
+          </div>
+        {% endpaginate %}
+
+        {% if section.settings.show_view_all %}
+          <div class="rfx-tabs__cta">
+            <a class="rfx-button rfx-button--ghost" href="{{ coll.url }}">{{ section.settings.view_all_label }}</a>
+          </div>
+        {% endif %}
+      {% else %}
+        <p>Selecciona una colección en este bloque.</p>
+      {% endif %}
+    </div>
+  {% endfor %}
+</section>
+
+<style>
+  button{box-shadow:none;} button:hover{box-shadow:none;}
+
+  /* Ocultar por dispositivo (breakpoints Dawn/Fabric) */
+  @media (max-width: 749px){ .rfx-hide--mobile{ display:none!important; } }
+  @media (min-width: 750px) and (max-width: 989px){ .rfx-hide--tablet{ display:none!important; } }
+  @media (min-width: 990px){ .rfx-hide--desktop{ display:none!important; } }
+
+  .rfx-tabs{ width:100%; }
+  .rfx-tabs__header{ display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1rem; }
+  .rfx-tabs__title{ margin:0; font-weight:600; }
+  .rfx-tabs__list{ display:flex; gap:.5rem; overflow:auto; padding:.25rem; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  .rfx-tabs__list::-webkit-scrollbar{ display:none; }
+  .rfx-tabs__tab{
+    font-family:'Segoe UI',Arial,sans-serif;
+    font-size:60px;
+    font-weight:500;
+    color:#9e9e9e;
+    margin-right:25px;
+    cursor:pointer;
+    transition:all .3s ease;
+    text-decoration:none;
+    background:transparent; border:0; padding:0;
+  }
+  .rfx-tabs__tab:hover{ color:#F5C842; font-weight:500; }
+  .rfx-tabs__tab.is-active{ color:#333; font-weight:500; }
+  .rfx-tabs__panel{ display:none; animation:rfx-fade .18s ease-out; }
+  .rfx-tabs__panel.is-active{ display:block; }
+  @keyframes rfx-fade{ from{opacity:0} to{opacity:1} }
+
+  .rfx-grid{ display:grid; gap:1rem; }
+  .rfx-grid--2{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+  @media (min-width:768px){
+    .rfx-grid--3{ grid-template-columns:repeat(3,1fr); }
+    .rfx-grid--4{ grid-template-columns:repeat(4,1fr); }
+  }
+
+  .rfx-card{ display:flex; flex-direction:column; border:1px solid rgba(0,0,0,0); border-radius:.75rem; overflow:hidden; background:#fff; }
+  .rfx-card__media{ position:relative; display:block; aspect-ratio:1/1; background:#fafafa; }
+  .rfx-card__media img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .rfx-card__placeholder{ width:100%; height:100%; background:linear-gradient(180deg,#f5f5f5,#eee); }
+  .rfx-badge{ position:absolute; top:.5rem; left:.5rem; font-size:.75rem; padding:.25rem .5rem; background:#111; color:#fff; border-radius:.5rem; }
+  .rfx-card__body{ padding:.75rem; display:flex; flex-direction:column; gap:.5rem; }
+  .rfx-card__title{ font-weight:600; text-decoration:none; color:inherit; }
+  .rfx-card__title:hover{ text-decoration:underline; }
+  .rfx-card__price{ font-size:.95rem; }
+  .rfx-price s{ opacity:.55; margin-right:.35rem; }
+  .rfx-card__form{ margin-top:.25rem; }
+  .rfx-button{ display:inline-flex; align-items:center; justify-content:center; border:1px solid rgba(0,0,0,.18); padding:.55rem .9rem; border-radius:.5rem; background:#111; color:#fff; text-decoration:none; }
+  .rfx-button:hover{ filter:brightness(1.05); }
+  .rfx-button--ghost{ background:transparent; color:inherit; }
+  .rfx-button--disabled{ opacity:.5; cursor:not-allowed; }
+
+
+</style>
+
+<script>
+  (function(){
+    function initTabs(root){
+      if(!root) return;
+      root.addEventListener('click', function(e){
+        const btn = e.target.closest('.rfx-tabs__tab');
+        if(!btn || !root.contains(btn)) return;
+        e.preventDefault();
+
+        const id = btn.dataset.tabTarget;
+        root.querySelectorAll('.rfx-tabs__tab').forEach(t => {
+          t.classList.remove('is-active');
+          t.setAttribute('aria-selected','false');
+        });
+        root.querySelectorAll('.rfx-tabs__panel').forEach(p => p.classList.remove('is-active'));
+
+        btn.classList.add('is-active');
+        btn.setAttribute('aria-selected','true');
+
+        const panel = root.querySelector('#' + id);
+        if(panel){
+          panel.classList.add('is-active');
+          try{ panel.focus({preventScroll:true}); }catch(_){}
+        }
+      }, {passive:false});
+    }
+
+    var root = document.getElementById('rfx-tabs-{{ section.id }}');
+    initTabs(root);
+
+    document.addEventListener('shopify:section:load', function(evt){
+      if(evt && evt.detail && evt.detail.sectionId === '{{ section.id }}'){
+        var reRoot = document.getElementById('rfx-tabs-{{ section.id }}');
+        initTabs(reRoot);
+      }
+    });
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Tabs - Xoxemy",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Título", "default": "Colecciones destacadas" },
+    { "type": "range", "id": "columns_desktop", "label": "Columnas (desktop)", "min": 2, "max": 4, "step": 1, "default": 4 },
+    { "type": "range", "id": "products_per_tab", "label": "Productos por pestaña", "min": 4, "max": 16, "step": 1, "default": 8 },
+    { "type": "checkbox", "id": "enable_quick_add", "label": "Habilitar Quick Add básico", "default": true },
+    { "type": "checkbox", "id": "show_view_all", "label": "Mostrar botón 'Ver todo'", "default": true },
+    { "type": "text", "id": "view_all_label", "label": "Texto botón 'Ver todo'", "default": "Ver todo" },
+
+    { "type": "header", "content": "Visibilidad" },
+    { "type": "checkbox", "id": "hide_on_mobile", "label": "Ocultar en móvil (≤749px)", "default": false },
+    { "type": "checkbox", "id": "hide_on_tablet", "label": "Ocultar en tablet (750–989px)", "default": false },
+    { "type": "checkbox", "id": "hide_on_desktop", "label": "Ocultar en ordenador (≥990px)", "default": false },
+
+    { "type": "select", "id": "section_spacing", "label": "Espaciado de sección", "default": "section--pad",
+      "options": [
+        { "value": "", "label": "Compacto" },
+        { "value": "section--pad", "label": "Cómodo" }
+      ]
+    }
+  ],
+  "blocks": [
+    {
+      "type": "tab",
+      "name": "Pestaña",
+      "settings": [
+        { "type": "text", "id": "tab_label", "label": "Etiqueta de pestaña" },
+        { "type": "collection", "id": "collection", "label": "Colección" }
+      ]
+    }
+  ],
+  "max_blocks": 8,
+  "presets": [
+    { "name": "Xoxemy - Tabs", "category": "Featured" }
+  ]
+}
+{% endschema %}
